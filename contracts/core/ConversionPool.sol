@@ -189,6 +189,4 @@ contract ConversionPool is ERC20{
         totalMarketMakersFee = totalMarketMakersFee - interests;
         marketMakersRedeems[msg.sender] = 0;
     }
-
-    //cambiare in deal il distribute repayments se c'è la conversion pool
 }
