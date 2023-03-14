@@ -101,6 +101,11 @@ contract LiquidityPool is ERC721{
         );
     }
 
+    /**
+     * @dev emit erc721 interest bearing tokens to the liquidity provider
+     * @param _to the address of the liquidity provider
+     * @param _amount the amount deposited
+    **/
     function emitTokenToInvestors(address _to, uint256 _amount) public {
         // check that the caller is the investor router
         require(msg.sender == address(investorsRouter), "You cannot call this function");
@@ -118,6 +123,10 @@ contract LiquidityPool is ERC721{
         invest(targetRateInvestOnDeposits);
     }
 
+    /**
+     * @dev invest funds received with deposit and repayments of senior tokens in other senior tokens of other deals
+     * @param _targetToCheck the utilization rate target to check for reinvest
+    **/
     function invest(uint256 _targetToCheck) internal {
         //invest in senior tranche
         //if the target liquidity available is reached
@@ -126,6 +135,7 @@ contract LiquidityPool is ERC721{
             uint256 _amountToInvest = (totalVolume/100)*targetRateInvestOnDeposits - totalInvested;
             while (_amountToInvest>0 && dealsFactory.getDealByIndex(i) != address(0)){ 
                 if(dealsFactory.getDealState(dealsFactory.getDealByIndex(i))){
+                    bentobox.transfer(DAI, address(this), dealsFactory.getDealByIndex(i), _amountToInvest);
                     uint256 seniorInvested = Deal(dealsFactory.getDealByIndex(i)).emitTokensToInvestors(address(this), _amountToInvest);
                     _amountToInvest = _amountToInvest - seniorInvested;
                     totalInvested = totalInvested + seniorInvested;
@@ -142,6 +152,10 @@ contract LiquidityPool is ERC721{
 
     }
 
+    /**
+     * @dev liquidity provider withdrawal function
+     * @param _idToken the interest bearing token to redeem
+    **/
     function withdraw(uint256 _idToken) public {
         //withdrawFunds
         //if the target liquidity available is maintaned with the withdraw
@@ -161,7 +175,9 @@ contract LiquidityPool is ERC721{
 
     }
 
-
+    /**
+     * @dev function called by the deal when making a repayment of junior tokens
+    **/
     function receiveRepayments() public {
         //check the caller is a deal
         require(dealsFactory.getDealState(msg.sender), "This deal contract does not exist");

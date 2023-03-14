@@ -193,12 +193,15 @@ contract Deal is Ownable{
     **/
     function distributeRepaymentsJunior(uint256 _id) public onlyOwner {
         require(investorsAmounts[investorsAddresses[_id]]>0, "Already repaid");
-        bentobox.withdraw(DAI, address(this), investorsAddresses[_id], investorsAmounts[investorsAddresses[_id]] ,0);
+        if(investorsAddresses[_id]==address(conversionPool)){
+            bentobox.transfer(DAI, address(this), address(liquidityPool), investorsAmounts[investorsAddresses[_id]]);
+            conversionPool.receiveRepayments(investorsAmounts[investorsAddresses[_id]]);
+        } else {
+            bentobox.withdraw(DAI, address(this), investorsAddresses[_id], investorsAmounts[investorsAddresses[_id]] ,0);
+        }
         investorsAmounts[investorsAddresses[_id]]=0;
         tokens.burnTokens(investorsAddresses[_id],investorsAmounts[investorsAddresses[_id]]);
-        if(investorsAddresses[_id]==address(conversionPool)){
-            conversionPool.receiveRepayments(investorsAmounts[investorsAddresses[_id]]);
-        }
+        
 
     }
 
@@ -207,7 +210,7 @@ contract Deal is Ownable{
      * @param _amount identifier of the investor in the loan
     **/
     function distributeRepaymentsSenior(uint256 _amount) internal {
-       bentobox.withdraw(DAI, address(this), address(liquidityPool), _amount ,0);
+       bentobox.transfer(DAI, address(this), address(liquidityPool), _amount);
        liquidityPool.receiveRepayments();
        tokens.burnTokens(address(liquidityPool),_amount);
     }
