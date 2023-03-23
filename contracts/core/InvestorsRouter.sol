@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 //openzeppelin
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 //protocols contracts
 import { IIdentityToken } from "../interfaces/IIdentityToken.sol";
@@ -18,7 +19,7 @@ import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
 import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
 
 
-contract InvestorsRouter {
+contract InvestorsRouter is Ownable {
 
     ERC20 private DAI;
     IBentobox private bentobox;
@@ -43,12 +44,14 @@ contract InvestorsRouter {
         masterContractManagerBentobox = IMasterContractManager(_masterContractManagerBentoboxAddress);
         identityToken = IIdentityToken(manager.getAddress(1));
         dealsFactory = IDealsFactory(manager.getAddress(2));
-        liquidityPool = ILiquidityPool(manager.getAddress(4));
 
         //initialize bentobox
         masterContractManagerBentobox.registerProtocol();
     }
 
+    function setLiquidityPool () public onlyOwner{
+        liquidityPool = ILiquidityPool(manager.getAddress(4));
+    }
     /**
      * @dev Set the approval on this contract for operate on behalf of the user
      * @param user the investor address
@@ -63,7 +66,7 @@ contract InvestorsRouter {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    ) public onlyOwner {
         masterContractManagerBentobox.setMasterContractApproval(
             user,
             address(this),
@@ -79,20 +82,22 @@ contract InvestorsRouter {
      * @param _deal the deal address
      * @param _amount to amount to invest 
     **/
-    function investInDeals (address _deal, uint256 _amount) public {
-        require(identityToken.getWhitelisted(msg.sender)==true , "You are not whitelisted for invest in this asset");
-        bentobox.deposit(DAI,msg.sender,_deal,_amount,0);
-        Deal(_deal).emitTokensToInvestors(msg.sender, _amount);
+    function investInDeals (address _investor, address _deal, uint256 _amount) public {
+        require(_investor == msg.sender || msg.sender == owner(), "You are not whitelisted for invest in this asset");
+        require(identityToken.getWhitelisted(_investor)==true , "You are not whitelisted for invest in this asset");
+        bentobox.deposit(DAI,_investor,_deal,_amount,0);
+        Deal(_deal).emitTokensToInvestors(_investor, _amount);
     }
 
     /**
      * @dev liquidity provider investment
      * @param _amount the amount to invest
     **/
-    function investInLiquidityPool (uint256 _amount) public {
-        require(identityToken.getWhitelisted(msg.sender)==true , "You are not whitelisted for invest in this asset");
-        bentobox.deposit(DAI,msg.sender,address(liquidityPool),_amount,0);
-        liquidityPool.emitTokenToInvestors(msg.sender, _amount);
+    function investInLiquidityPool (address _investor, uint256 _amount) public {
+        require(_investor == msg.sender || msg.sender == owner(), "You are not whitelisted for invest in this asset");
+        require(identityToken.getWhitelisted(_investor)==true , "You are not whitelisted for invest in this asset");
+        bentobox.deposit(DAI,_investor,address(liquidityPool),_amount,0);
+        liquidityPool.emitTokenToInvestors(_investor, _amount);
     }
     
 }

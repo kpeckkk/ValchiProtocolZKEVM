@@ -17,3 +17,10 @@ export default async function main() {
 
   console.log(`SimpleAccount address: ${address}`);
 }
+
+main()
+  .then(() => console.log("fatto"))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

@@ -12,7 +12,7 @@ contract IdentityToken is ERC721URIStorage, Ownable {
    
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
-    mapping (address => bool) private whitelistedUsers; //list of KYC users
+    mapping (address => uint256) private whitelistedUsers; //list of KYC users
 
     constructor() ERC721("IdentityToken", "IDT") {}
 
@@ -26,7 +26,7 @@ contract IdentityToken is ERC721URIStorage, Ownable {
         _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
         _setTokenURI(tokenId, _uri);
-        whitelistedUsers[_to] = true;
+        whitelistedUsers[_to] = 1;
     }
 
    /**
@@ -49,7 +49,7 @@ contract IdentityToken is ERC721URIStorage, Ownable {
     **/
    function burn(uint256 _tokenId) external {
         require(ownerOf(_tokenId) == msg.sender, "Only the owner of the token can burn it.");
-        whitelistedUsers[msg.sender] = false;
+        whitelistedUsers[msg.sender] = 0;
         _burn(_tokenId);
     }
 
@@ -58,7 +58,7 @@ contract IdentityToken is ERC721URIStorage, Ownable {
      * @param _tokenId id of the identity token
     **/
     function forceBurn(uint256 _tokenId) external onlyOwner{
-        whitelistedUsers[ownerOf(_tokenId)] = false;
+        whitelistedUsers[ownerOf(_tokenId)] = 0;
         _burn(_tokenId);
     }
 
@@ -71,7 +71,14 @@ contract IdentityToken is ERC721URIStorage, Ownable {
      * @param _user address of the user
     **/ 
     function getWhitelisted (address _user) public view returns (bool){
-        return whitelistedUsers[_user];
+        if(whitelistedUsers[_user]>0)
+        {
+            return true;
+        }
+        else{
+            return false;
+        }
+       
     }
 }
 

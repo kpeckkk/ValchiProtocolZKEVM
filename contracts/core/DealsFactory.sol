@@ -22,11 +22,7 @@ contract DealsFactory is Ownable{
     mapping (uint256 => address) private dealsListByIndex; //dealsList for a better research on the list
     mapping (address => bool) private dealsList; //dealsList with their state: true = active, false = inactive
    
-   constructor (bytes memory _encodedAddresses) {
-        address _managerAddress;
-        
-        encodedAddresses = _encodedAddresses;
-        (_managerAddress,,,) = abi.decode(_encodedAddresses,(address,address,address,address));
+   constructor (address _managerAddress) {
         manager = IManager(_managerAddress);
         identityToken = IIdentityToken(manager.getAddress(1));
     }
@@ -46,20 +42,13 @@ contract DealsFactory is Ownable{
 
 
     /**
-     * @dev called by the originator which wants to create a new deal
-     * @param _encodedLoanData the main variables of the loan in the deal
+     * @dev called by the protocol when create a new deal for an originator
+     * @param _dealContract the address of the deal contract
     **/
-    function createDeal (bytes memory _encodedLoanData) public returns (address) {
-        //check KYB
-        //require(identityToken.getWhitelisted(msg.sender) == true);
-
-        //create deal contract
-        DealContract = new Deal(encodedAddresses, _encodedLoanData);
-        //add to the list
-        dealsListByIndex[_dealsCounter.current()] = address(DealContract);
-        dealsList[address(DealContract)] = true;
+    function addDeal (address _dealContract) public onlyOwner {
+        dealsListByIndex[_dealsCounter.current()] = _dealContract;
+        dealsList[_dealContract] = true;
         _dealsCounter.increment();
-        return address(DealContract);
     }
 
     /**

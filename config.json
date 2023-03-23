@@ -1,0 +1,8 @@
+{
+    "bundlerUrl": "https://node.stackup.sh/v1/rpc/8f7f3c3807b3cd03d18e4413de097f0fbec58115b384ced16ddbb37dfd69915f",
+    "rpcUrl": "https://rpc-mumbai.maticvigil.com/",
+    "signingKey": "0x1d0f6cb0b999a3c30ccff9e92d1c4e2f9a5c2c4c4fd34574790c6a1828df5bbf",
+    "entryPoint": "0x0576a174D229E3cFA37253523E645A78A0C91B57",
+    "simpleAccountFactory": "0x71D63edCdA95C61D6235552b5Bc74E32d8e2527B",
+    "paymasterUrl": ""
+  }

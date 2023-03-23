@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 //openzeppelin
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 //protocols contracts
 import { IIdentityToken } from "../interfaces/IIdentityToken.sol";
@@ -16,7 +17,7 @@ import { Deal } from "../core/Deal.sol";
 import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
 import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
 
-contract ConversionPool is ERC20{
+contract ConversionPool is ERC20, Ownable{
 
     IBentobox private bentobox;
     IMasterContractManager private masterContractManagerBentobox;
@@ -82,7 +83,7 @@ contract ConversionPool is ERC20{
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    ) public onlyOwner {
         masterContractManagerBentobox.setMasterContractApproval(
             user,
             address(this),

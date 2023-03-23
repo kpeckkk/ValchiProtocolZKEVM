@@ -92,18 +92,14 @@ contract Deal is Ownable{
         (loanData.originator, loanData.amount, loanData.interest) = abi.decode(_encodedLoanData,(address,uint256,uint256));
         loanData.juniorTokens = (loanData.amount / leverage);
         loanData.collectedJunior=0;
-        loanData.toRepayJunior = (loanData.amount / leverage) + (loanData.amount * (loanData.interest*(1 - performanceFee + (leverage*underwriterFee))));
+        loanData.toRepayJunior = (loanData.amount / leverage) + (loanData.amount * (loanData.interest*(100 - performanceFee + (leverage*underwriterFee))));
         loanData.repayedJunior=0;
         loanData.seniorTokens = (loanData.amount - (loanData.amount / leverage));
         loanData.collectedSenior=0;
-        loanData.toRepaySenior = (loanData.amount - (loanData.amount / leverage)) + (loanData.amount*(loanData.interest*(1-performanceFee-underwriterFee)));
+        loanData.toRepaySenior = (loanData.amount - (loanData.amount / leverage)) + (loanData.amount*(loanData.interest*(100-performanceFee-underwriterFee)));
         loanData.repayedSenior=0;
         liquidityPoolAmount = 0;
         
-
-        //create the ERC20 contract for the tokens
-        tokens = new TokenDeal(loanData.amount, address(identityToken), address(conversionPool));
-
         //initialize bentobox
         masterContractManagerBentobox.registerProtocol();
     }
@@ -122,7 +118,7 @@ contract Deal is Ownable{
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    ) public onlyOwner{
         masterContractManagerBentobox.setMasterContractApproval(
             user,
             address(this),

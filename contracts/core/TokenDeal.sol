@@ -14,12 +14,14 @@ contract TokenDeal is ERC20, Ownable {
 
     IIdentityToken private identityToken;
     address conversionPool;
+    address dealOwner;
 
 
-    constructor(uint256 _amount, address _identityToken, address _conversionPool) ERC20("TOKENDEAL", "TDL") {
-        _mint(owner(), _amount);
+    constructor(address _dealOwner, uint256 _amount, address _identityToken, address _conversionPool) ERC20("TOKENDEAL", "TDL") {
+        dealOwner = _dealOwner;
         identityToken = IIdentityToken(_identityToken);
         conversionPool = _conversionPool;
+        _mint(dealOwner, _amount);
     }
 
     /**
@@ -32,9 +34,11 @@ contract TokenDeal is ERC20, Ownable {
         internal override virtual 
     {
         super._beforeTokenTransfer(_from, _to, _amount);
-        require(identityToken.getWhitelisted(_to) == true || _to == owner() || _to == conversionPool, "The receiver is not whitelisted");
+        if(_to != dealOwner){
+            require(identityToken.getWhitelisted(_to) == true || _to == dealOwner || _to == conversionPool, "The receiver is not whitelisted");
+        }
         //with this we modify the mapping investors in the Deal contract
-        Deal(owner()).transactionConversion(_from,_to);
+        Deal(dealOwner).transactionConversion(_from,_to);
     }
 
     /**
@@ -43,8 +47,9 @@ contract TokenDeal is ERC20, Ownable {
      * @param _amount the amount of tokens to burn
     **/
     function burnTokens(address _from, uint256 _amount) 
-        public onlyOwner
+        public
     {
+        require (msg.sender == dealOwner, "You are not allowed to burn tokens");
         _burn(_from,_amount);
     }
 
