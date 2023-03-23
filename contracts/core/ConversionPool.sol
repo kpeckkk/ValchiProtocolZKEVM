@@ -13,14 +13,9 @@ import { IInvestorsRouter } from "../interfaces/IInvestorsRouter.sol";
 import { IDealsFactory } from "../interfaces/IDealsFactory.sol";
 import { Deal } from "../core/Deal.sol";
 
-//bentobox contracts
-import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
-import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
 
 contract ConversionPool is ERC20, Ownable{
 
-    IBentobox private bentobox;
-    IMasterContractManager private masterContractManagerBentobox;
 
     IIdentityToken private identityToken;
     IManager private manager;
@@ -49,12 +44,9 @@ contract ConversionPool is ERC20, Ownable{
          //set the contracts interfaces     
         address _managerAddress;
         address _DAIAddress;
-        address _bentoboxAddress; 
-        address _masterContractManagerBentoboxAddress;  
-        (_managerAddress, _DAIAddress, _bentoboxAddress, _masterContractManagerBentoboxAddress) = abi.decode(_encodedAddresses,(address,address,address,address));
+        (_managerAddress, _DAIAddress) = abi.decode(_encodedAddresses,(address,address));
         manager = IManager(_managerAddress);
-        bentobox = IBentobox(_bentoboxAddress);
-        masterContractManagerBentobox = IMasterContractManager(_masterContractManagerBentoboxAddress);
+        
         identityToken = IIdentityToken(manager.getAddress(1));
         dealsFactory = IDealsFactory(manager.getAddress(2));
         investorsRouter = IInvestorsRouter(manager.getAddress(3));
@@ -69,30 +61,7 @@ contract ConversionPool is ERC20, Ownable{
         marketmakersRedeemTime = _marketmakersRedeemTime;
     }
 
-    /**
-     * @dev Set the approval on this contract for operate on behalf of the user
-     * @param user the originator address
-     * @param approved to approve the contract = true
-     * @param v signature of the originator
-     * @param r signature of the originator
-     * @param s signature of the originator
-    **/
-    function setBentoBoxApproval(
-        address user,
-        bool approved,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public onlyOwner {
-        masterContractManagerBentobox.setMasterContractApproval(
-            user,
-            address(this),
-            approved,
-            v,
-            r,
-            s
-        );
-    }
+    
     /**
      * @dev hook for implement a limited trasfearable token only between KYC users
      * @param _from the sender
@@ -159,7 +128,7 @@ contract ConversionPool is ERC20, Ownable{
         uint i = 0;
         while (amountToInvest>0 && dealsFactory.getDealByIndex(i) != address(this)){ //to modify with address null
                 if(dealsFactory.getDealState(dealsFactory.getDealByIndex(i))){
-                    bentobox.transfer(DAI, address(this), dealsFactory.getDealByIndex(i), amountToInvest);
+                    DAI.transfer(dealsFactory.getDealByIndex(i), amountToInvest);
                     uint256 juniorInvested = Deal(dealsFactory.getDealByIndex(i)).emitTokensToInvestors(address(this), amountToInvest);
                     amountToInvest = amountToInvest - juniorInvested;
                     //TD modify APR pool
@@ -174,7 +143,7 @@ contract ConversionPool is ERC20, Ownable{
     function redeemInterests() public {
         require(balanceOf(msg.sender)>0, "you have no perpetual bonds");
         uint256 interests = balanceOf(msg.sender) * aprPool * ((block.timestamp - holdersRedeems[msg.sender])/365);
-        bentobox.withdraw(DAI, address(this), msg.sender, interests ,0);
+        DAI.transfer(msg.sender, interests);
         holdersRedeems[msg.sender] = block.timestamp;
     }
 
@@ -186,7 +155,7 @@ contract ConversionPool is ERC20, Ownable{
         //controlla che redeemtime sia maggiore di block timestamp
         require(marketMakersTimings[msg.sender] >= block.timestamp, "You can't withdraw your yield yet");
         uint256 interests = marketMakersRedeems[msg.sender] * marketmakersFee * ((marketmakersRedeemTime)/365);
-        bentobox.withdraw(DAI, address(this), msg.sender, interests ,0);
+        DAI.transfer(msg.sender, interests);
         totalMarketMakersFee = totalMarketMakersFee - interests;
         marketMakersRedeems[msg.sender] = 0;
     }

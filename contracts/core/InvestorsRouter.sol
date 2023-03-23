@@ -14,17 +14,11 @@ import { ILiquidityPool } from "../interfaces/ILiquidityPool.sol";
 //the ERC20 contract for deal's tokens
 import { Deal } from "../core/Deal.sol";
 
-//bentobox contracts
-import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
-import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
-
 
 contract InvestorsRouter is Ownable {
 
     ERC20 private DAI;
-    IBentobox private bentobox;
-    IMasterContractManager private masterContractManagerBentobox;
-
+   
     IIdentityToken private identityToken;
     IManager private manager;
     IDealsFactory private dealsFactory;
@@ -35,48 +29,20 @@ contract InvestorsRouter is Ownable {
         //set the contracts interfaces     
         address _managerAddress;
         address _DAIAddress;
-        address _bentoboxAddress; 
-        address _masterContractManagerBentoboxAddress;  
-        (_managerAddress, _DAIAddress, _bentoboxAddress, _masterContractManagerBentoboxAddress) = abi.decode(_encodedAddresses,(address,address,address,address));
+        
+        (_managerAddress, _DAIAddress) = abi.decode(_encodedAddresses,(address,address));
         manager = IManager(_managerAddress);
         DAI = ERC20(_DAIAddress);
-        bentobox = IBentobox(_bentoboxAddress);
-        masterContractManagerBentobox = IMasterContractManager(_masterContractManagerBentoboxAddress);
         identityToken = IIdentityToken(manager.getAddress(1));
         dealsFactory = IDealsFactory(manager.getAddress(2));
 
-        //initialize bentobox
-        masterContractManagerBentobox.registerProtocol();
+       
     }
 
     function setLiquidityPool () public onlyOwner{
         liquidityPool = ILiquidityPool(manager.getAddress(4));
     }
-    /**
-     * @dev Set the approval on this contract for operate on behalf of the user
-     * @param user the investor address
-     * @param approved to approve the contract = true
-     * @param v signature of the originator
-     * @param r signature of the originator
-     * @param s signature of the originator
-    **/
-    function setBentoBoxApproval(
-        address user,
-        bool approved,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public onlyOwner {
-        masterContractManagerBentobox.setMasterContractApproval(
-            user,
-            address(this),
-            approved,
-            v,
-            r,
-            s
-        );
-    }
-
+    
     /**
      * @dev underwriter investment
      * @param _deal the deal address
@@ -85,7 +51,7 @@ contract InvestorsRouter is Ownable {
     function investInDeals (address _investor, address _deal, uint256 _amount) public {
         require(_investor == msg.sender || msg.sender == owner(), "You are not whitelisted for invest in this asset");
         require(identityToken.getWhitelisted(_investor)==true , "You are not whitelisted for invest in this asset");
-        bentobox.deposit(DAI,_investor,_deal,_amount,0);
+        DAI.transferFrom(_investor,_deal,_amount);
         Deal(_deal).emitTokensToInvestors(_investor, _amount);
     }
 
@@ -96,7 +62,7 @@ contract InvestorsRouter is Ownable {
     function investInLiquidityPool (address _investor, uint256 _amount) public {
         require(_investor == msg.sender || msg.sender == owner(), "You are not whitelisted for invest in this asset");
         require(identityToken.getWhitelisted(_investor)==true , "You are not whitelisted for invest in this asset");
-        bentobox.deposit(DAI,_investor,address(liquidityPool),_amount,0);
+        DAI.transferFrom(_investor,address(liquidityPool),_amount);
         liquidityPool.emitTokenToInvestors(_investor, _amount);
     }
     

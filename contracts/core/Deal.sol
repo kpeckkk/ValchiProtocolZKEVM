@@ -17,18 +17,12 @@ import { IConversionPool } from "../interfaces/IConversionPool.sol";
 //the ERC20 contract for deal's tokens
 import { TokenDeal } from "../core/TokenDeal.sol";
 
-//bentobox contracts
-import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
-import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
-
 
 contract Deal is Ownable{
 
     TokenDeal private tokens;
 
     ERC20 private DAI;
-    IBentobox private bentobox;
-    IMasterContractManager private masterContractManagerBentobox;
 
     IIdentityToken private identityToken;
     IManager private manager;
@@ -70,13 +64,10 @@ contract Deal is Ownable{
         //set the contracts interfaces     
         address _managerAddress;
         address _DAIAddress;
-        address _bentoboxAddress; 
-        address _masterContractManagerBentoboxAddress;  
-        (_managerAddress, _DAIAddress, _bentoboxAddress, _masterContractManagerBentoboxAddress) = abi.decode(_encodedAddresses,(address,address,address,address));
+       
+        (_managerAddress, _DAIAddress) = abi.decode(_encodedAddresses,(address,address));
         manager = IManager(_managerAddress);
         DAI = ERC20(_DAIAddress);
-        bentobox = IBentobox(_bentoboxAddress);
-        masterContractManagerBentobox = IMasterContractManager(_masterContractManagerBentoboxAddress);
         identityToken = IIdentityToken(manager.getAddress(1));
         investorsRouter = IInvestorsRouter(manager.getAddress(3));
         liquidityPool = ILiquidityPool(manager.getAddress(4));
@@ -100,33 +91,6 @@ contract Deal is Ownable{
         loanData.repayedSenior=0;
         liquidityPoolAmount = 0;
         
-        //initialize bentobox
-        masterContractManagerBentobox.registerProtocol();
-    }
-
-    /**
-     * @dev Set the approval on this contract for operate on behalf of the user
-     * @param user the originator address
-     * @param approved to approve the contract = true
-     * @param v signature of the originator
-     * @param r signature of the originator
-     * @param s signature of the originator
-    **/
-    function setBentoBoxApproval(
-        address user,
-        bool approved,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public onlyOwner{
-        masterContractManagerBentobox.setMasterContractApproval(
-            user,
-            address(this),
-            approved,
-            v,
-            r,
-            s
-        );
     }
 
     
@@ -169,7 +133,7 @@ contract Deal is Ownable{
      * @param _amount the amount of funds
     **/
     function repayFunds (uint256 _amount) public {
-        bentobox.deposit(DAI,msg.sender,address(this),_amount,0);
+        DAI.transferFrom(msg.sender, address(this), _amount);
         //repay before senior tranches and then junior tranches
         if(loanData.repayedJunior + _amount <= loanData.toRepayJunior){
             loanData.repayedJunior = loanData.repayedJunior + _amount;
@@ -190,10 +154,10 @@ contract Deal is Ownable{
     function distributeRepaymentsJunior(uint256 _id) public onlyOwner {
         require(investorsAmounts[investorsAddresses[_id]]>0, "Already repaid");
         if(investorsAddresses[_id]==address(conversionPool)){
-            bentobox.transfer(DAI, address(this), address(liquidityPool), investorsAmounts[investorsAddresses[_id]]);
+            DAI.transfer(address(liquidityPool), investorsAmounts[investorsAddresses[_id]]);
             conversionPool.receiveRepayments(investorsAmounts[investorsAddresses[_id]]);
         } else {
-            bentobox.withdraw(DAI, address(this), investorsAddresses[_id], investorsAmounts[investorsAddresses[_id]] ,0);
+            DAI.transfer(investorsAddresses[_id], investorsAmounts[investorsAddresses[_id]]);
         }
         investorsAmounts[investorsAddresses[_id]]=0;
         tokens.burnTokens(investorsAddresses[_id],investorsAmounts[investorsAddresses[_id]]);
@@ -206,7 +170,7 @@ contract Deal is Ownable{
      * @param _amount identifier of the investor in the loan
     **/
     function distributeRepaymentsSenior(uint256 _amount) internal {
-       bentobox.transfer(DAI, address(this), address(liquidityPool), _amount);
+       DAI.transfer(address(liquidityPool), _amount);
        liquidityPool.receiveRepayments();
        tokens.burnTokens(address(liquidityPool),_amount);
     }
@@ -218,7 +182,7 @@ contract Deal is Ownable{
     **/
     function withdrawFunds (uint256 _amount) public{
         require(msg.sender == loanData.originator, "The request is not submitted by the originator of the contract");
-        bentobox.withdraw(DAI, address(this), loanData.originator, _amount,0);
+        DAI.transfer(loanData.originator, _amount);
     }
 
     /**

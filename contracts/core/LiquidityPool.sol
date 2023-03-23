@@ -16,15 +16,8 @@ import { IDealsFactory } from "../interfaces/IDealsFactory.sol";
 import { Deal } from "../core/Deal.sol";
 
 
-//bentobox contracts
-import { IBentobox } from "../interfaces/Bentobox/IBentobox.sol";
-import { IMasterContractManager } from "../interfaces/Bentobox/IMasterContractManager.sol";
-
-
 contract LiquidityPool is ERC721, Ownable{
 
-    IBentobox private bentobox;
-    IMasterContractManager private masterContractManagerBentobox;
 
     IIdentityToken private identityToken;
     IManager private manager;
@@ -54,19 +47,15 @@ contract LiquidityPool is ERC721, Ownable{
          //set the contracts interfaces     
         address _managerAddress;
         address _DAIAddress;
-        address _bentoboxAddress; 
-        address _masterContractManagerBentoboxAddress;  
-        (_managerAddress, _DAIAddress, _bentoboxAddress, _masterContractManagerBentoboxAddress) = abi.decode(_encodedAddresses,(address,address,address,address));
+        (_managerAddress, _DAIAddress) = abi.decode(_encodedAddresses,(address,address));
         manager = IManager(_managerAddress);
         DAI = ERC20(_DAIAddress);
-        bentobox = IBentobox(_bentoboxAddress);
-        masterContractManagerBentobox = IMasterContractManager(_masterContractManagerBentoboxAddress);
+        
         identityToken = IIdentityToken(manager.getAddress(1));
         dealsFactory = IDealsFactory(manager.getAddress(2));
         investorsRouter = IInvestorsRouter(manager.getAddress(3));
 
-        //initialize bentobox
-        masterContractManagerBentobox.registerProtocol();
+        
 
         //set the contract variables
         totalVolume = 0;
@@ -78,30 +67,6 @@ contract LiquidityPool is ERC721, Ownable{
         contractInterest = 0;
     }
 
-    /**
-     * @dev Set the approval on this contract for operate on behalf of the user
-     * @param user the originator address
-     * @param approved to approve the contract = true
-     * @param v signature of the originator
-     * @param r signature of the originator
-     * @param s signature of the originator
-    **/
-    function setBentoBoxApproval(
-        address user,
-        bool approved,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public onlyOwner {
-        masterContractManagerBentobox.setMasterContractApproval(
-            user,
-            address(this),
-            approved,
-            v,
-            r,
-            s
-        );
-    }
 
     /**
      * @dev emit erc721 interest bearing tokens to the liquidity provider
@@ -137,7 +102,7 @@ contract LiquidityPool is ERC721, Ownable{
             uint256 _amountToInvest = (totalVolume/100)*targetRateInvestOnDeposits - totalInvested;
             while (_amountToInvest>0 && dealsFactory.getDealByIndex(i) != address(0)){ 
                 if(dealsFactory.getDealState(dealsFactory.getDealByIndex(i))){
-                    bentobox.transfer(DAI, address(this), dealsFactory.getDealByIndex(i), _amountToInvest);
+                    DAI.transfer(dealsFactory.getDealByIndex(i), _amountToInvest);
                     uint256 seniorInvested = Deal(dealsFactory.getDealByIndex(i)).emitTokensToInvestors(address(this), _amountToInvest);
                     _amountToInvest = _amountToInvest - seniorInvested;
                     totalInvested = totalInvested + seniorInvested;
@@ -170,7 +135,7 @@ contract LiquidityPool is ERC721, Ownable{
         require(((totalInvested / (totalVolume - tokens[_idToken].principal - earned)) * 100) < targetRateWithdraw, "No Funds on the contract for the withdraw");
 
         //if the contract have the funds, withdraw them
-        bentobox.withdraw(DAI, address(this), ownerOf(_idToken), tokens[_idToken].principal + earned ,0);
+        DAI.transfer(ownerOf(_idToken), tokens[_idToken].principal + earned);
         
         //TD change contractInterest
 
