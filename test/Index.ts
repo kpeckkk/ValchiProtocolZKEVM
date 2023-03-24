@@ -5,7 +5,6 @@ import ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat";
 import { DAIcontractPolygon, DAIwhalePolygon, BentoboxPolygon } from "./common";
-import { getSignedMasterContractApprovalData } from "./signature";
 import { getTokens } from "./Types";
 
 
@@ -60,7 +59,7 @@ describe("Integration tests", function () {
         //deploy contract Deal and TokenDeal , after an ok KYB process
         const loanAmount = 100;
         const loanInterest = 4
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address", "address", "address" ], [ manager.address, DAIcontractPolygon, BentoboxPolygon, BentoboxPolygon ]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
         let encodedLoanData = ethers.utils.defaultAbiCoder.encode([ "address", "uint256", "uint256" ], [ user.address, loanAmount , loanInterest ]);
         const Deal = await ethers.getContractFactory("Deal");
         const deal = await Deal.connect(protocolAccount).deploy(encodedAddresses,encodedLoanData, {
@@ -73,9 +72,6 @@ describe("Integration tests", function () {
             gasLimit: 4000000,
           }); //the 3 and 4 address aren't rights
         await tokenDeal.deployed();
-
-        const {v,r,s} = await getSignedMasterContractApprovalData(BentoboxPolygon,user,user.privateKey,deal.address,true,0,31337);
-        await deal.connect(protocolAccount).setBentoBoxApproval(user.address,true,v,r,s);
 
         await dealsFactory.addDeal(deal.address);
 
@@ -94,7 +90,7 @@ describe("Integration tests", function () {
         const manager = await Manager.connect(protocolAccount).deploy();
         await manager.deployed();
 
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address", "address", "address" ], [ manager.address, DAIcontractPolygon, BentoboxPolygon, BentoboxPolygon ]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
 
         //deploy contract IdentityToken.sol
         const IdentityToken = await ethers.getContractFactory("IdentityToken");
@@ -159,16 +155,6 @@ describe("Integration tests", function () {
           }); //the 3 and 4 address aren't rights
         await tokenDeal.deployed();
 
-        /*
-        const {v,r,s} = await getSignedMasterContractApprovalData(BentoboxPolygon,user,user.privateKey,deal.address,true,0,31337);
-        await deal.connect(protocolAccount).setBentoBoxApproval(user.address,true,v,r,s);
-
-        await dealsFactory.addDeal(deal.address);
-        */
-
-        //INVEST IN A JUNIOR DEAL -------------------------------------------------------------------
-        const {v,r,s} = await getSignedMasterContractApprovalData(BentoboxPolygon,investor,investor.privateKey,investorsRouter.address,true,0,31337);
-        await investorsRouter.connect(protocolAccount).setBentoBoxApproval(investor.address,true,v,r,s);
 
         //init of variables
         const DAI = new ethers.Contract(DAIcontractPolygon, ERC20.abi, ethers.provider); // ERC20 contract of DAI
@@ -198,7 +184,7 @@ describe("Integration tests", function () {
         const manager = await Manager.connect(protocolAccount).deploy();
         await manager.deployed();
 
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address", "address", "address" ], [ manager.address, DAIcontractPolygon, BentoboxPolygon, BentoboxPolygon ]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
 
         //deploy contract IdentityToken.sol
         const IdentityToken = await ethers.getContractFactory("IdentityToken");
@@ -262,18 +248,7 @@ describe("Integration tests", function () {
             gasLimit: 4000000,
           }); //the 3 and 4 address aren't rights
         await tokenDeal.deployed();
-
-        /*
-        const {v,r,s} = await getSignedMasterContractApprovalData(BentoboxPolygon,user,user.privateKey,deal.address,true,0,31337);
-        await deal.connect(protocolAccount).setBentoBoxApproval(user.address,true,v,r,s);
-
-        await dealsFactory.addDeal(deal.address);
-        */
-
-        //INVEST IN A JUNIOR DEAL -------------------------------------------------------------------
-        const {v,r,s} = await getSignedMasterContractApprovalData(BentoboxPolygon,investor,investor.privateKey,investorsRouter.address,true,0,31337);
-        await investorsRouter.connect(protocolAccount).setBentoBoxApproval(investor.address,true,v,r,s);
-
+       
         //init of variables
         const DAI = new ethers.Contract(DAIcontractPolygon, ERC20.abi, ethers.provider); // ERC20 contract of DAI
 
