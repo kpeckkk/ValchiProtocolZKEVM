@@ -4,7 +4,7 @@ import { expect } from "chai";
 import ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { ethers } from "hardhat";
-import { DAIcontractPolygon, DAIwhalePolygon, BentoboxPolygon } from "./common";
+import { DAIcontractZKEVM, DAIwhaleZKEVM } from "./common";
 import { getTokens } from "./Types";
 
 
@@ -59,7 +59,7 @@ describe("Integration tests", function () {
         //deploy contract Deal and TokenDeal , after an ok KYB process
         const loanAmount = 100;
         const loanInterest = 4
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractZKEVM]);
         let encodedLoanData = ethers.utils.defaultAbiCoder.encode([ "address", "uint256", "uint256" ], [ user.address, loanAmount , loanInterest ]);
         const Deal = await ethers.getContractFactory("Deal");
         const deal = await Deal.connect(protocolAccount).deploy(encodedAddresses,encodedLoanData, {
@@ -90,7 +90,7 @@ describe("Integration tests", function () {
         const manager = await Manager.connect(protocolAccount).deploy();
         await manager.deployed();
 
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractZKEVM]);
 
         //deploy contract IdentityToken.sol
         const IdentityToken = await ethers.getContractFactory("IdentityToken");
@@ -157,10 +157,10 @@ describe("Integration tests", function () {
 
 
         //init of variables
-        const DAI = new ethers.Contract(DAIcontractPolygon, ERC20.abi, ethers.provider); // ERC20 contract of DAI
+        const DAI = new ethers.Contract(DAIcontractZKEVM, ERC20.abi, ethers.provider); // ERC20 contract of DAI
 
         //fund DAI
-        await getTokens(protocolAccount.address, DAIcontractPolygon ,DAIwhalePolygon, ethers.utils.parseUnits("50000.0",18));
+        await getTokens(protocolAccount.address, DAIcontractZKEVM ,DAIwhaleZKEVM, ethers.utils.parseUnits("50000.0",18));
 
         //trasfer funds to account
         await DAI.connect(protocolAccount).approve(investorsRouter.address,ethers.utils.parseUnits("50000.0",18));
@@ -184,7 +184,7 @@ describe("Integration tests", function () {
         const manager = await Manager.connect(protocolAccount).deploy();
         await manager.deployed();
 
-        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractPolygon]);
+        let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ manager.address, DAIcontractZKEVM]);
 
         //deploy contract IdentityToken.sol
         const IdentityToken = await ethers.getContractFactory("IdentityToken");
@@ -250,10 +250,10 @@ describe("Integration tests", function () {
         await tokenDeal.deployed();
        
         //init of variables
-        const DAI = new ethers.Contract(DAIcontractPolygon, ERC20.abi, ethers.provider); // ERC20 contract of DAI
+        const DAI = new ethers.Contract(DAIcontractZKEVM, ERC20.abi, ethers.provider); // ERC20 contract of DAI
 
         //fund DAI
-        await getTokens(protocolAccount.address, DAIcontractPolygon ,DAIwhalePolygon, ethers.utils.parseUnits("50000.0",18));
+        await getTokens(protocolAccount.address, DAIcontractZKEVM ,DAIwhaleZKEVM, ethers.utils.parseUnits("50000.0",18));
 
         //trasfer funds to account
         await DAI.connect(protocolAccount).approve(investorsRouter.address,ethers.utils.parseUnits("50000.0",18));
