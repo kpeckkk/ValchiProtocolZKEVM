@@ -7,9 +7,9 @@ import { DAIcontractZKEVM } from "../test/common";
 
 async function main() {
   
-      //let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractPolygon]);
+      //let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractZKEVM]);
       //console.log(encodedAddresses);
-      //await updateAddresses();
+      await updateAddresses();
   }
 
 // We recommend this pattern to be able to use async/await everywhere
