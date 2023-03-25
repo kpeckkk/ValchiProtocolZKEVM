@@ -9,7 +9,7 @@ async function main() {
   
       //let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractZKEVM]);
       //console.log(encodedAddresses);
-      await updateAddresses();
+      //await updateAddresses();
   }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -39,7 +39,7 @@ async function deployIdentityToken () {
 
 async function deployDealsFactory () {
   const DealsFactory = await ethers.getContractFactory("DealsFactory");
-  const dealsFactory = await DealsFactory.deploy(ethers.utils.getAddress("0x2Cdf4844455c7dA5112B8e48341b964FD2e67727"));
+  const dealsFactory = await DealsFactory.deploy(ethers.utils.getAddress("0xfF6aE532B6a4f7773805dD368108622dC1Ea55C1"));
   await dealsFactory.deployed();
 
 
@@ -48,7 +48,7 @@ async function deployDealsFactory () {
 }
 
 async function deployInvestorsRouter () {
-  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractZKEVM]);
+  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0xfF6aE532B6a4f7773805dD368108622dC1Ea55C1", DAIcontractZKEVM]);
 
   //deploy contract InvestorsRouter.sol
   const InvestorsRouter = await ethers.getContractFactory("InvestorsRouter");
@@ -60,7 +60,7 @@ async function deployInvestorsRouter () {
 }
 
 async function deployLiquidityPool () {
-  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractZKEVM]);
+  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0xfF6aE532B6a4f7773805dD368108622dC1Ea55C1", DAIcontractZKEVM]);
 
   //deploy contract LiquidityPool.sol
   const LiquidityPool = await ethers.getContractFactory("LiquidityPool");
@@ -73,7 +73,7 @@ async function deployLiquidityPool () {
 }
 
 async function deployConversionPool () {
-  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", DAIcontractZKEVM]);
+  let encodedAddresses = ethers.utils.defaultAbiCoder.encode([ "address", "address"], [ "0xfF6aE532B6a4f7773805dD368108622dC1Ea55C1", DAIcontractZKEVM]);
 
   //deploy contract ConversionPool.sol
   const ConversionPool = await ethers.getContractFactory("ConversionPool");
@@ -85,14 +85,14 @@ async function deployConversionPool () {
 }
 
 async function updateAddresses (){
-  const manager = new ethers.Contract("0x2Cdf4844455c7dA5112B8e48341b964FD2e67727", managerABI, ethers.provider.getSigner())
+  const manager = new ethers.Contract("0xfF6aE532B6a4f7773805dD368108622dC1Ea55C1", managerABI, ethers.provider.getSigner())
 
-  //await manager.setLeverage(1);
-  //await manager.setUnderwriterFee(70);
-  //await manager.setPerformanceFee(10);
-  //await manager.setDefaultReserveRatio(10);
+  await manager.setLeverage(1);
+  await manager.setUnderwriterFee(70);
+  await manager.setPerformanceFee(10);
+  await manager.setDefaultReserveRatio(10);
 
-  await manager.setAddress(3,"0xe01D582E3F06BBa926AF1Ea6A423b6e356fd342D");
+  await manager.setAddress(1,"0xcEa19A3D121552f5673F269a3D70b492842DF322");
   
     // 1 => IdentityToken
     // 2 => DealsFactory
